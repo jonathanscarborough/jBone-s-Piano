@@ -12,6 +12,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 20px;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .container {
@@ -21,6 +22,7 @@ body {
   padding: 40px;
   max-width: 1200px;
   width: 100%;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 header {
@@ -46,6 +48,8 @@ h1 {
   padding: 20px;
   background: #f8f9fa;
   border-radius: 10px;
+  overflow-x: auto; /* Allow scrolling only if absolutely necessary */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .piano {
@@ -56,6 +60,8 @@ h1 {
   background: #2c3e50;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  min-width: 0; /* Allow flexbox to shrink if needed */
+  max-width: 100%; /* Ensure it doesn't exceed container */
 }
 
 .key {
@@ -174,14 +180,28 @@ h1 {
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .container {
+    padding: 20px 10px; /* Reduce padding on mobile */
+  }
+
   .white-key {
-    width: 40px;
+    width: 48px; /* Increased from 40px for easier tapping */
     height: 200px;
   }
 
   .black-key {
-    width: 28px;
+    width: 32px; /* Increased from 28px */
     height: 120px;
+    margin-left: -16px; /* Adjusted to match new width */
+    margin-right: -16px;
+  }
+
+  .piano-container {
+    padding: 15px 5px; /* Reduce padding to maximize space */
+  }
+
+  .piano {
+    padding: 8px 5px; /* Reduce piano padding */
   }
 
   .keyboard-hints {
@@ -195,6 +215,58 @@ h1 {
 
   h1 {
     font-size: 36px;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+}
+
+/* iOS specific optimizations */
+@media (max-width: 428px) {
+  /* iPhone 14 Pro Max and similar */
+  .white-key {
+    width: calc((100vw - 60px) / 8); /* Dynamically size based on viewport */
+    max-width: 52px; /* Maximum size */
+    min-width: 45px; /* Minimum size for usability */
+  }
+
+  .black-key {
+    width: 30px;
+    margin-left: -15px;
+    margin-right: -15px;
+  }
+
+  .container {
+    padding: 15px 8px;
+  }
+
+  .piano-container {
+    padding: 12px 2px;
+  }
+}
+
+@media (max-width: 390px) {
+  /* iPhone 14/15 standard */
+  .white-key {
+    width: calc((100vw - 50px) / 8);
+    max-width: 48px;
+    min-width: 43px;
+  }
+}
+
+@media (max-width: 375px) {
+  /* iPhone SE and smaller */
+  .white-key {
+    width: calc((100vw - 40px) / 8);
+    max-width: 46px;
+    min-width: 40px;
+  }
+
+  .black-key {
+    width: 28px;
+    margin-left: -14px;
+    margin-right: -14px;
   }
 }
 

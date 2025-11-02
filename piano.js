@@ -45,20 +45,28 @@ class Piano {
 
   // Resume audio context on user interaction (required by browser autoplay policy)
   setupAudioContextResume() {
-    const resumeAudio = () => {
-      if (this.audioContext && this.audioContext.state === 'suspended') {
-        this.audioContext.resume().then(() => {
-          console.log('Audio context resumed');
-        }).catch(err => {
+    const resumeAudio = async () => {
+      if (!this.audioContext) {
+        console.error('Audio context not initialized');
+        return;
+      }
+      
+      if (this.audioContext.state === 'suspended') {
+        try {
+          await this.audioContext.resume();
+          console.log('Audio context resumed on user interaction');
+        } catch (err) {
           console.error('Failed to resume audio context:', err);
-        });
+        }
+      } else {
+        console.log('Audio context state:', this.audioContext.state);
       }
     };
 
-    // Resume on any user interaction
-    document.addEventListener('click', resumeAudio, { once: true });
-    document.addEventListener('keydown', resumeAudio, { once: true });
-    document.addEventListener('touchstart', resumeAudio, { once: true });
+    // Resume on any user interaction - don't use once:true so it can retry if needed
+    document.addEventListener('click', resumeAudio);
+    document.addEventListener('keydown', resumeAudio);
+    document.addEventListener('touchstart', resumeAudio);
   }
 
   // Convert MIDI note to frequency
@@ -82,6 +90,10 @@ class Piano {
 
   // Generate a piano-like sound using multiple oscillators
   generatePianoSound(frequency) {
+    if (!this.audioContext || this.audioContext.state === 'closed') {
+      throw new Error('Audio context not available');
+    }
+
     const gainNode = this.audioContext.createGain();
     const masterGain = this.audioContext.createGain();
     
@@ -164,21 +176,46 @@ class Piano {
   }
 
   // Play a note
-  playNote(midiNote) {
+  async playNote(midiNote) {
     if (this.activeNotes.has(midiNote)) {
       return; // Note already playing
     }
 
     // Resume audio context if suspended (handles autoplay policy)
-    if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume().catch(err => {
-        console.error('Failed to resume audio context:', err);
-      });
+    if (!this.audioContext) {
+      console.error('Audio context not initialized');
+      return;
     }
 
-    const frequency = this.midiToFrequency(midiNote);
-    const sound = this.generatePianoSound(frequency);
-    this.activeNotes.set(midiNote, sound);
+    if (this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume();
+        console.log('Audio context resumed');
+      } catch (err) {
+        console.error('Failed to resume audio context:', err);
+        return;
+      }
+    }
+
+    // Ensure audio context is running
+    if (this.audioContext.state !== 'running') {
+      console.warn('Audio context state:', this.audioContext.state);
+      try {
+        await this.audioContext.resume();
+      } catch (err) {
+        console.error('Could not resume audio context:', err);
+        return;
+      }
+    }
+
+    try {
+      const frequency = this.midiToFrequency(midiNote);
+      const sound = this.generatePianoSound(frequency);
+      this.activeNotes.set(midiNote, sound);
+    } catch (err) {
+      console.error('Error generating sound:', err);
+      return;
+    }
     
     // Visual feedback
     const keyElement = document.querySelector(`[data-midi="${midiNote}"]`);
